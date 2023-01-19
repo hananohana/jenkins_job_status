@@ -9,3 +9,5 @@ Token can be created in the following way:
  2. Under "API Token", click "ADD Token", add any name for the token and click "Generate"
  3. Copy the generated string (unable to show it again later)
  4. Fill the 'user' and paste the 'token' in relevant places in 'jenkins.txt' file
+
+To run - 'python main-text.py'

@@ -10,4 +10,4 @@ Token can be created in the following way:
  3. Copy the generated string (unable to show it again later)
  4. Fill the 'user' and paste the 'token' in relevant places in 'jenkins.txt' file
 
-To run - 'python main-text.py'
+To run - 'python main-text.py' or use the 'run.bat' batch file.

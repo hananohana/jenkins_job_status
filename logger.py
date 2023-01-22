@@ -43,3 +43,5 @@ def set_logger(log_file):
 
     logger.addHandler(file_handler)
     # logger.addHandler(stdout_handler)
+
+ensure_precondition()

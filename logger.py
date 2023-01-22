@@ -7,6 +7,13 @@ import os
 LOGS_PATH = "./logs/"
 
 
+def ensure_precondition():
+    if not os.path.exists(LOGS_PATH):
+        os.mkdir(LOGS_PATH)
+    if not os.path.exists(LOGS_PATH + "old_logs/"):
+        os.mkdir(LOGS_PATH + "old_logs/")
+
+
 def zip_log_files():
     for file_name in os.listdir(LOGS_PATH):
         if file_name.endswith(".log"):
@@ -18,6 +25,8 @@ def zip_log_files():
 
 
 def set_logger(log_file):
+    ensure_precondition()
+    
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s',

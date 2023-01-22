@@ -15,14 +15,24 @@ USER_INPUT = {'0': 'O', '1': '0'}
 LOG_FILE = 'log_text'
 
 
+def clear_screen():
+    # Clearing the Screen
+    # posix is os name for Linux or mac
+    if(os.name == 'posix'):
+        os.system('clear')
+    # else screen will be cleared for windows
+    else:
+        os.system('cls')
+
+
 def display(jobs, lock):
     while True:
         try:
             with lock:
-                os.system('cls')
+                clear_screen()
                 jenkins_jobs.print_jobs_list(jobs)
                 jenkins_jobs.update_jobs_statuses(jobs)
-                os.system('cls')
+                clear_screen()
                 jenkins_jobs.print_jobs_list(jobs)
                 jenkins_jobs.print_user_menu()
 

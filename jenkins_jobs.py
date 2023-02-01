@@ -5,14 +5,21 @@ job is a Jenkins job with the following details:
  * job's status
 
 """
+import datetime
 import json
 import logging
+import os.path
 import pickle
 
 import requests
+import shutil
 import urllib3
 
+from popup import PopUp
+
 JOBS_FILE = 'saved_jobs.pkl'
+JOBS_FILE_BACKUP = 'saved_jobs.pkl.bck'
+JOBS_FILE_DUMMY = 'saved_jobs_dummy.pkl'
 
 
 ##############
@@ -71,11 +78,15 @@ class Jenkins:
 
 
 class JenkinsJob:
-    def __init__(self, job_link='', job_desc='', job_type='', job_status='na'):
+    def __init__(self, job_link='', job_desc='', job_type='', job_number=0, job_status='na', job_duration=0,
+                 job_start_time=0):
         self.job_link = job_link
         self.job_desc = job_desc
         self.job_type = job_type
+        self.job_number = job_number
         self.job_status = job_status
+        self.job_duration = job_duration
+        self.job_start_time = job_start_time
 
     def update_link(self, job_link: str):
         self.job_link = job_link
@@ -87,6 +98,15 @@ class JenkinsJob:
         job_type = page_dict['fullDisplayName'].split(" ")[0]
         self.job_type = job_type
 
+    def update_number(self, page_dict: dict):
+        job_number = page_dict['fullDisplayName'].split(" ")[1][1:]
+        self.job_number = job_number
+
+    def update_start_time(self, page_dict: dict):
+        ts = page_dict['timestamp']
+        job_start_time = datetime.datetime.fromtimestamp(ts)
+        self.job_start_time = job_start_time
+
     def update_status(self, page_dict: dict):
         job_status = page_dict['result']
         self.job_status = job_status
@@ -97,18 +117,29 @@ class JenkinsJob:
         return eval(page_json)  # eval : json -> dict
 
     def get_job_details_line(self):
-        line1 = '{:58s} {:25s} {:10s}'.format(self.job_link, self.job_type, self.job_status)
-        line2 = '{:79s}'.format(self.job_desc)
+        line1 = '{:64s} {:25s} {:10s}'.format(self.job_link, self.job_type, self.job_status)
+        line2 = '{:94s}'.format(self.job_desc)
         return line1, line2
 
     def get_job_details_dict(self):
         return {'link': self.job_link, 'type': self.job_type, 'status': self.job_status}
 
-    def update_job_details(self):
+    def update_job_details(self, popup):
         page_dict = self.fetch_job_page()
+        # logger.info(page_dict)
         self.update_type(page_dict)
+        self.update_number(page_dict)
         if is_job_finished(page_dict):
             self.update_status(page_dict)
+            if popup:
+                job_dict = {'job_type': self.job_type,
+                            'job_link': self.job_link,
+                            'job_number': self.job_number,
+                            'job_status': self.job_status
+                            }
+                self.popup = PopUp(job_dict)
+                self.popup.mainloop()
+                self.popup.quit()
         else:
             self.update_status({'result': "Running..."})
 
@@ -125,7 +156,9 @@ def remove_job_from_list(job_list, number: int):
         job_list[i] = job_list[i + 1]
     del job_list[len(job_list) - 1]
     logger.debug("Job: " + str(job_to_remove) + " was removed from jobs list.")
-    logger.debug("Updated jobs list is: " + str(job_list))
+    logger.debug("Updated jobs list is: ")
+    for i in job_list:
+        logger.debug(str(i))
 
 
 def update_job_description(jobs_list, number: int, job_description):
@@ -135,14 +168,16 @@ def update_job_description(jobs_list, number: int, job_description):
 
 
 def print_jobs_list(jobs_list):
-    print(109 * "_")
-    print("| -       " + '{:59s} {:25s} {:10s}'.format("Link", "Type", "Status") + " - |")
-    print(109 * "-")
+    print(114 * "_")
+    print("|-       " + '{:65s} {:25s} {:10s}'.format("Link", "Type", "Status") + " -|")
+    print(114 * "-")
+    if len(jobs_list) == 0:
+        print("    No Jobs To Follow. Use (a) to add the first job...")
     for i in range(len(jobs_list)):
         job_details_line1, job_details_line2 = jobs_list[i].get_job_details_line()
-        print("| - [" + '{:2s}'.format(str(i + 1)) + "] - " + str(job_details_line1) + " - |")
-        print("| -  _description_ - " + str(job_details_line2) + "       - |")
-    print(109 * "-")
+        print("|- [" + '{:>2s}'.format(str(i + 1)) + "] - " + str(job_details_line1) + " -|")
+        print("|- Description: " + str(job_details_line2) + "  -|")
+    print(114 * "-")
 
 
 def get_jobs_as_list_of_dicts(jobs_list):
@@ -152,24 +187,48 @@ def get_jobs_as_list_of_dicts(jobs_list):
     return jobs_dict_list
 
 
-def update_jobs_statuses(jobs_list):
+def update_jobs_statuses(jobs_list, popup):
     for key, val in jobs_list.items():
-        val.update_job_details()
+        if val.job_status not in ["ABORTED", "PASSED", "FAILED"]:
+            val.update_job_details(popup)
 
 
 def save_jobs_to_file(the_jobs):
     if len(the_jobs) > 0:
-        with open(JOBS_FILE, 'wb') as f:
-            pickle.dump(the_jobs, f)
+        try:
+            if os.path.exists(JOBS_FILE_BACKUP):
+                os.remove(JOBS_FILE_BACKUP)
+            shutil.copy(JOBS_FILE, JOBS_FILE_BACKUP)
+            with open(JOBS_FILE, 'wb') as f:
+                pickle.dump(the_jobs, f)
+        except Exception as e:
+            logger.debug(e)
+            logger.error("Couldn't backup jobs file..!")
 
 
-def load_jobs_from_file():
-    with open(JOBS_FILE, 'rb') as f:
+def load_jobs_from_file(jobs_file):
+    with open(jobs_file, 'rb') as f:
+        logger.info("loading jobs from file")
         jobs = pickle.load(f)
-        logger.debug(jobs)
+        logger.info("jobs loaded successfully from file.")
+        logger.info("jobs:")
+        for i in jobs:
+            logger.info(f"|- [{str(i)}] LINK: {str(jobs[i].job_link)} | DESCRIPTION: {str(jobs[i].job_desc)} -|")
         return jobs
 
 
-def print_user_menu():
-    print("|- Use Input to (a)dd, (r)emove job, (u)pdate job description or (q)uit... -|")
+def create_jobs_file():
+    if not os.path.exists(JOBS_FILE):
+        open(JOBS_FILE, "w").close()
+        logger.info("jobs file created")
+
+
+def print_user_menu(popup: bool):
+    ena_dis = "enabled - Disable" if popup else "disabled - Enable"
+    print("|- Use Input to:\n"
+          "    (a)dd\n"
+          "    (r)emove job\n"
+          "    (u)pdate job description\n"
+          f"    (p)op-up is {ena_dis} pop-up\n"
+          "    (q)uit...")
     return None

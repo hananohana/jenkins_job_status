@@ -1,8 +1,8 @@
 import logging
+import os
 import sys
 from datetime import datetime
 from zipfile import ZipFile
-import os
 
 LOGS_PATH = "./logs/"
 
@@ -15,18 +15,20 @@ def ensure_precondition():
 
 
 def zip_log_files():
+    if not os.path.exists(LOGS_PATH):
+        return None
     for file_name in os.listdir(LOGS_PATH):
         if file_name.endswith(".log"):
             zip_file_name = LOGS_PATH + "old_logs/" + file_name[:-4] + ".zip"
             full_file_name = LOGS_PATH + file_name
-            with ZipFile(zip_file_name, 'w') as zip:
-                zip.write(full_file_name)
+            with ZipFile(zip_file_name, 'w') as zip_file:
+                zip_file.write(full_file_name)
             os.remove(LOGS_PATH + file_name)
 
 
 def set_logger(log_file):
     ensure_precondition()
-    
+
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s',
@@ -42,6 +44,4 @@ def set_logger(log_file):
     file_handler.setFormatter(formatter)
 
     logger.addHandler(file_handler)
-    # logger.addHandler(stdout_handler)
-
-ensure_precondition()
+    # logger.addHandler(stdout_handler)  # uncomment if on-screen logs needed. Will flood screen. Depends on # of jobs

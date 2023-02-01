@@ -9,32 +9,27 @@ import jenkins_jobs
 
 from logger import set_logger, zip_log_files
 
+logger = logging.getLogger(__name__)
+
 write = sys.stdout.write
 
 USER_INPUT = {'0': 'O', '1': '0'}
 LOG_FILE = 'log_text'
-
-
-def clear_screen():
-    # Clearing the Screen
-    # posix is os name for Linux or mac
-    if(os.name == 'posix'):
-        os.system('clear')
-    # else screen will be cleared for windows
-    else:
-        os.system('cls')
-
+POP_UP_ENABLE = True
 
 def display(jobs, lock):
+    a = 1
     while True:
         try:
             with lock:
-                clear_screen()
+                if a == 1:
+                    os.system('cls')
+                    jenkins_jobs.print_jobs_list(jobs)
+                    a = 0
+                jenkins_jobs.update_jobs_statuses(jobs, popup=POP_UP_ENABLE)
+                os.system('cls')
                 jenkins_jobs.print_jobs_list(jobs)
-                jenkins_jobs.update_jobs_statuses(jobs)
-                clear_screen()
-                jenkins_jobs.print_jobs_list(jobs)
-                jenkins_jobs.print_user_menu()
+                jenkins_jobs.print_user_menu(POP_UP_ENABLE)
 
             for i in range(30):
 
@@ -61,6 +56,7 @@ def display(jobs, lock):
 
 
 def user_input(jobs, lock):
+    global POP_UP_ENABLE
     while USER_INPUT['0'] != 'q':
 
         a = input(" ")
@@ -87,13 +83,22 @@ def user_input(jobs, lock):
                 a = 'O'
                 b = '1'
 
+            if a == 'p':
+                if POP_UP_ENABLE:
+                    print("Setting pop-up to - Disable. Will not show pop-up for job status change.")
+                    POP_UP_ENABLE = False
+                else:
+                    print("Setting pop-up to - Enable. Will show pop-up for job status change.")
+                    POP_UP_ENABLE = True
+                a = '0'
+                b = '1'
+
         USER_INPUT['0'] = a
         USER_INPUT['1'] = b
 
 
 def main():
-    logger = logging.getLogger(__name__)
-    logger.info("START of logger - Main")
+    logger.info("START of logger - Main TEXT")
 
     jobs = {}
     jobs = load_from_file(jobs)
@@ -115,7 +120,10 @@ def main():
 
 def load_from_file(jobs):
     if os.path.exists(jenkins_jobs.JOBS_FILE):
-        jobs = jenkins_jobs.load_jobs_from_file()
+        jobs = jenkins_jobs.load_jobs_from_file(jenkins_jobs.JOBS_FILE)
+    else:
+        logger.info("jobs file does not exist, creating an empty file")
+        jenkins_jobs.create_jobs_file()
     return jobs
 
 

@@ -10,4 +10,8 @@ Token can be created in the following way:
  3. Copy the generated string (unable to show it again later)
  4. Fill the 'user' and paste the 'token' in relevant places in 'jenkins.txt' file
 
-To run - 'python main-text.py' or use the 'run.bat' batch file.
+To run:
+On Windows machine - 'python main-text.py' or use the 'run.bat' batch file.
+On Linux machine - 'python main-text.py'
+
+NOTE: Only Python3.7+ has the option to use pop-up notification for finished jobs (Successful/Failed/Aborted)

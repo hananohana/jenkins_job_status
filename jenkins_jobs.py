@@ -130,8 +130,10 @@ class JenkinsJob:
         # logger.info(page_dict)
         self.update_type(page_dict)
         self.update_number(page_dict)
-        if len(page_dict['fullDisplayName'].split(" ")) > 2:
-            self.update_node(page_dict['fullDisplayName'].split(" ")[3].strip(","))
+        full_display = page_dict['fullDisplayName'].split(" ")
+        for item in full_display:
+            if "Lab" in item:
+                self.update_node(item.strip(","))
         if is_job_finished(page_dict):
             self.update_status(page_dict)
             if popup:

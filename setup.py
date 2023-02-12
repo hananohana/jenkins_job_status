@@ -1,10 +1,15 @@
-from setuptools import setup
+import subprocess
+import sys
 
-with open("requirements.txt", "r") as f:
-    requirements = f.read().splitlines()
 
-setup(
-    name='jenkins_job_status',
-    version='0.1.0',
-    install_requires=requirements
-)
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+
+what_python = float(sys.version[:3])
+
+install('urllib3==1.26.12')
+install('requests==2.28.1')
+
+if what_python >= 3.7:
+    install('customtkinter==5.0.3')

@@ -1,6 +1,7 @@
-import customtkinter
 import webbrowser
 from time import sleep
+
+import customtkinter
 
 
 class PopUp(customtkinter.CTk):
@@ -19,7 +20,7 @@ class PopUp(customtkinter.CTk):
         self.popup_frame = customtkinter.CTkFrame(self, corner_radius=0)
         self.popup_frame.grid(row=0, column=0, sticky="nsew")
         self.popup_frame.rowconfigure(0, weight=1)
-        self.popup_frame.columnconfigure(3, weight=1)
+        self.popup_frame.columnconfigure(2, weight=1)
 
         self.popup_type_label = customtkinter.CTkLabel(self.popup_frame, text=f"Job - {job['job_type']}",
                                                        compound="center")
@@ -33,11 +34,11 @@ class PopUp(customtkinter.CTk):
         self.popup_status_label = customtkinter.CTkLabel(self.popup_frame, text=f"{job['job_status']}",
                                                          compound="left", text_color=self.status_color(),
                                                          font=customtkinter.CTkFont(size=12, weight="bold", ))
-        self.popup_status_label.grid(row=0, column=2, padx=0, pady=0, sticky="nse")
+        self.popup_status_label.grid(row=0, column=2, padx=(0, 10), pady=0, sticky="nse")
 
-        self.popup_link = customtkinter.CTkButton(self.popup_frame, height=30, text="Go To Job",
-                                                  corner_radius=10, command=self.openweb)
-        self.popup_link.grid(row=1, column=0, columnspan=3, padx=0, pady=(0, 20), sticky="s")
+        self.popup_link_button = customtkinter.CTkButton(self.popup_frame, height=30, text="Go To Job",
+                                                  corner_radius=10, command=self.openweb, anchor="center")
+        self.popup_link_button.grid(row=1, column=0, columnspan=3, padx=0, pady=(0, 20), sticky="s")
 
     def status_color(self):
         if self.status == "SUCCESS":
@@ -75,7 +76,6 @@ if __name__ == "__main__":
                  'job_status': "ABORTED",
                  'job_link': "https://pl-jenkins01.pliops.ent:8443/job/test_driver/10025/consoleText"
                  }
-
 
     app1 = PopUp(job_dict1)
     app1.mainloop()

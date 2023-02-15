@@ -12,7 +12,8 @@ Token can be created in the following way:
 
 To run:
 1. run 'python3 setup.py'
-2. On Windows machine - 'python3 main-text.py' or use the 'run.bat' batch file.
-   On Linux machine - 'python3 main-text.py'
+2.a. Per OS:
+2.b. On Windows machine - 'python3 main-text.py' or use the 'run.bat' batch file.
+  b. On Linux machine - 'python3 main-text.py'
 
 NOTE: Only Python3.7+ has the option to use pop-up notification for finished jobs (Successful/Failed/Aborted)
